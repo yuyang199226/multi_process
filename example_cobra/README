@@ -1,0 +1,10 @@
+
+## build
+
+`go build -o example_cobra .`
+
+## run
+
+`./example_cobra serve`
+
+## stop

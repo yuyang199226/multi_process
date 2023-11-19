@@ -17,7 +17,8 @@ var serveCmd = &cobra.Command{
 	Short: "start qskm backend service.",
 	Long:  "start qskm backend service.",
 	Run: func(cmd *cobra.Command, args []string) {
-		Daemon()
+		daemon := Daemon{BizHealthPath: "http://127.0.0.1:8098/health"}
+		daemon.start()
 	},
 }
 
@@ -27,6 +28,15 @@ var opsCmd = &cobra.Command{
 	Long:  "stop qskm backend service.",
 	Run: func(cmd *cobra.Command, args []string) {
 		Ops()
+	},
+}
+
+var bizCmd = &cobra.Command{
+	Use:   "biz",
+	Short: "stop qskm backend service.",
+	Long:  "stop qskm backend service.",
+	Run: func(cmd *cobra.Command, args []string) {
+		Biz()
 	},
 }
 
@@ -47,9 +57,10 @@ func Execute() {
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
-	serveCmd.Flags().BoolVar(&daemon, "daemon", false, "Run in daemon mode")
+	//serveCmd.Flags().BoolVar(&daemon, "daemon", false, "Run in daemon mode")
 	rootCmd.AddCommand(opsCmd)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file(default is config.yaml)")
+	rootCmd.AddCommand(bizCmd)
 }
 
 func main() {

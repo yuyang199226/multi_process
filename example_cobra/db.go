@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/go-redis/redis"
@@ -27,12 +28,20 @@ func InitRedis() {
 
 }
 
-func GetStatus() (int, error) {
+func GetStatus(key string) (int, error) {
 	// 读取指定的值
-	value, err := RedisClient.Get("qskm-backend:status").Int()
+	value, err := RedisClient.Get(key).Int()
 	if err != nil {
-		fmt.Println("读取Redis值失败:", err)
+		if errors.Is(err, redis.Nil) {
+			return 0, nil
+		}
 		return 0, err
 	}
 	return value, nil
+}
+
+func SetStatus(key string, val interface{}) error {
+	// 读取指定的值
+	err := RedisClient.Set(key, val, -1).Err()
+	return err
 }
