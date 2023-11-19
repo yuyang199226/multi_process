@@ -134,25 +134,24 @@ func (d *Daemon) WatchOPSProcess(args []string, wg *sync.WaitGroup) {
 	time.Sleep(3 * time.Second)
 
 	for {
-		val, _ := GetStatus(cacheKey)
-		status := Status(val)
-		// 如果不是1，5，7 则忽略
-		if !(status == Running || status == BizStart || status == Rollback) {
-			time.Sleep(1 * time.Second)
-			fmt.Printf("Sleep 1 second, PID: %d,\n", os.Getpid())
-			continue
-
-		}
+		//val, _ := GetStatus(cacheKey)
+		//status := Status(val)
+		//// 如果不是1，5，7 则忽略
+		//if !(status == Running || status == BizStart || status == Rollback) {
+		//	time.Sleep(1 * time.Second)
+		//	fmt.Printf("Sleep 1 second, PID: %d,\n", os.Getpid())
+		//	continue
+		//}
 		if d.healthCheck(d.OpsHealthPath) {
 			fmt.Printf("heath check OPS \n")
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		fmt.Printf("status=%d\n", status)
-		time.Sleep(5 * time.Second)
+		fmt.Println("check op")
+		time.Sleep(2 * time.Second)
 		cmd1 = exec.Command(args[0], args[1:]...)
 		startChildProcess(cmd1, wg)
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 
 	}
 }
