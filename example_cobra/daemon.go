@@ -16,6 +16,7 @@ const BIZ_PID_FILE = "/tmp/qskm-backend-biz.pid"
 
 var done = make(chan int)
 var cmd2 *exec.Cmd
+var cmd1 *exec.Cmd
 var cacheKey = "qskm-backend:status"
 
 type Daemon struct {
@@ -39,7 +40,7 @@ func (d *Daemon) start() {
 	fmt.Printf("[*] PID: %d PPID: %d ARG: %s\n", os.Getpid(), os.Getppid(), os.Args)
 	pwd, _ := os.Getwd()
 	fmt.Println("PWD: ", pwd)
-	cmd1 := exec.Command(pwd+"/example_cobra", "ops")
+	cmd1 = exec.Command(pwd+"/example_cobra", "ops")
 	cmd2 = exec.Command(pwd+"/example_cobra", "biz")
 	// 启动子进程
 	startChildProcess(cmd1, &wg)
@@ -64,6 +65,7 @@ func (d *Daemon) start() {
 		}
 	}()
 	go d.WatchBIZProcess(cmd2.Args, &wg)
+	go d.WatchOPSProcess(cmd1.Args, &wg)
 	wg.Wait()
 	fmt.Println("子进程结束")
 	time.Sleep(10 * time.Second)
@@ -113,8 +115,8 @@ func (d *Daemon) WatchBIZProcess(args []string, wg *sync.WaitGroup) {
 			continue
 
 		}
-		if d.healthCheck() {
-			fmt.Printf("heath check\n")
+		if d.healthCheck(d.BizHealthPath) {
+			fmt.Printf("heath check BIZ \n")
 			time.Sleep(1 * time.Second)
 			continue
 		}
@@ -122,6 +124,34 @@ func (d *Daemon) WatchBIZProcess(args []string, wg *sync.WaitGroup) {
 		time.Sleep(5 * time.Second)
 		cmd2 = exec.Command(args[0], args[1:]...)
 		startChildProcess(cmd2, wg)
+		time.Sleep(5 * time.Second)
+
+	}
+}
+
+func (d *Daemon) WatchOPSProcess(args []string, wg *sync.WaitGroup) {
+	fmt.Println(args)
+	time.Sleep(3 * time.Second)
+
+	for {
+		val, _ := GetStatus(cacheKey)
+		status := Status(val)
+		// 如果不是1，5，7 则忽略
+		if !(status == Running || status == BizStart || status == Rollback) {
+			time.Sleep(1 * time.Second)
+			fmt.Printf("Sleep 1 second, PID: %d,\n", os.Getpid())
+			continue
+
+		}
+		if d.healthCheck(d.OpsHealthPath) {
+			fmt.Printf("heath check OPS \n")
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		fmt.Printf("status=%d\n", status)
+		time.Sleep(5 * time.Second)
+		cmd1 = exec.Command(args[0], args[1:]...)
+		startChildProcess(cmd1, wg)
 		time.Sleep(5 * time.Second)
 
 	}
@@ -137,8 +167,8 @@ func stopChildProcess(cmd *exec.Cmd) {
 	}
 }
 
-func (d *Daemon) healthCheck() bool {
-	resp, err := http.Get(d.BizHealthPath)
+func (d *Daemon) healthCheck(path string) bool {
+	resp, err := http.Get(path)
 	if err != nil {
 		return false
 	}

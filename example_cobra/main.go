@@ -17,7 +17,8 @@ var serveCmd = &cobra.Command{
 	Short: "start qskm backend service.",
 	Long:  "start qskm backend service.",
 	Run: func(cmd *cobra.Command, args []string) {
-		daemon := Daemon{BizHealthPath: "http://127.0.0.1:8098/health"}
+		daemon := Daemon{BizHealthPath: "http://127.0.0.1:8098/health",
+			OpsHealthPath: "http://127.0.0.1:8088/health"}
 		daemon.start()
 	},
 }
